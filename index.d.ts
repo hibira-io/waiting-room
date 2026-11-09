@@ -7,6 +7,8 @@ export interface WaitingRoomStatus {
   waiting: number;
   admit_per_minute: number;
   starts_at?: string;
+  /** Early arrivals get random places at starts_at. */
+  shuffle?: boolean;
   channel: string;
   at: number;
 }
@@ -18,6 +20,8 @@ export interface QueueUpdate {
   ahead: number;
   /** null while paused or before the start time. */
   etaMinutes: number | null;
+  /** True until the start time's draw deals this visitor a place (number and position are 0 meanwhile). */
+  drawPending: boolean;
   status: WaitingRoomStatus;
 }
 
@@ -35,6 +39,8 @@ export interface JoinOptions {
   room: string;
   /** Default https://ws.hibira.io */
   host?: string;
+  /** A user token signed by your server, for rooms with one place per signed-in customer. */
+  user?: string;
   storage?: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'> | null;
   onUpdate?(update: QueueUpdate): void;
   onTurn?(turn: Turn): void;

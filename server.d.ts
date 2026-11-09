@@ -5,6 +5,8 @@ export interface PassClaims {
   number: number;
   /** The queue ticket's id: record it to allow one checkout per number. */
   ticketId: string;
+  /** The signed user ID, in rooms with one place per signed-in customer. */
+  userId?: string;
   /** Unix seconds. */
   issuedAt: number;
   /** Unix seconds. */
@@ -36,8 +38,11 @@ export type Decision =
   | { action: 'deny' };
 
 export function verifyPass(pass: string | null | undefined, options: VerifyOptions): Promise<PassClaims | null>;
-export function waitingRoomUrl(options: { appKey: string; room: string; returnUrl?: string; host?: string; lang?: string }): string;
+export function waitingRoomUrl(options: { appKey: string; room: string; returnUrl?: string; host?: string; lang?: string; user?: string }): string;
 export function decide(request: { url: string; method?: string; cookie?: string | null }, options: GuardOptions): Promise<Decision>;
 /** null: let the request through. Otherwise return the Response. */
 export function protect(request: Request, options: GuardOptions): Promise<Response | null>;
 export function expressWaitingRoom(options: GuardOptions): (req: any, res: any, next: (err?: unknown) => void) => void;
+
+/** Signs a user token for rooms with one place per signed-in customer. */
+export function signUser(options: { secret: string; room: string; userId: string; ttlSeconds?: number; now?: number }): Promise<string>;

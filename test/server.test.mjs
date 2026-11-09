@@ -77,3 +77,12 @@ test('express middleware', async () => {
   const b = await run({ url: '/drop', cookie: 'hibira_wr_presale=' + fresh() });
   assert.equal(b.next, true);
 });
+
+test('signUser matches the server format', async () => {
+  const { signUser } = await import('../server.js');
+  const { createHmac } = await import('node:crypto');
+  const tok = await signUser({ secret: 'wr-secret-0123456789', room: 'presale', userId: 'cust_42', ttlSeconds: 600, now: 1800000000000 });
+  const want = createHmac('sha256', 'wr-secret-0123456789').update('hibira-waitroom-user.presale.cust_42.1800000600').digest('hex');
+  assert.equal(tok, 'cust_42.1800000600.' + want);
+  await assert.rejects(signUser({ secret: 's', room: 'r', userId: 'a.b' }));
+});
