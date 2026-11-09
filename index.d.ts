@@ -35,6 +35,8 @@ export interface JoinOptions {
   room: string;
   /** Default https://ws.hibira.io */
   host?: string;
+  /** WebSocket base URL. Defaults to https://ws-edge.hibira.io with the default host (the edge, where queued visitors have a connection pool of their own), else to host. */
+  wsHost?: string;
   storage?: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'> | null;
   onUpdate?(update: QueueUpdate): void;
   onTurn?(turn: Turn): void;
