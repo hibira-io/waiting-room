@@ -4,6 +4,6 @@
   "description": "Hibira waiting room as a Netlify Edge Function",
   "type": "module",
   "dependencies": {
-    "@hibira-io/waiting-room": "^0.1.0"
+    "@hibira-io/waiting-room": "^0.2.0"
   }
 }
