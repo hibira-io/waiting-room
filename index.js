@@ -3,6 +3,10 @@
 // directly (no pusher-js needed) and falls back to polling.
 
 const DEFAULT_HOST = 'https://ws.hibira.io';
+// Queued visitors' sockets go through the edge router: they share edge
+// shards instead of each holding a socket on the cluster, and count in the
+// waiting room's own connection pool, not the app's plan.
+const DEFAULT_EDGE_HOST = 'https://ws-edge.hibira.io';
 const STATUS_EVENT = 'hibira:waitroom-status';
 
 /**
@@ -18,6 +22,7 @@ export function joinWaitingRoom({
   room,
   host = DEFAULT_HOST,
   user,
+  wsHost = host === DEFAULT_HOST ? DEFAULT_EDGE_HOST : host,
   storage = typeof localStorage !== 'undefined' ? localStorage : null,
   onUpdate,
   onTurn,
@@ -157,7 +162,7 @@ export function joinWaitingRoom({
 
   function connect() {
     if (!WS || stopped) return;
-    const u = new URL('/app/' + encodeURIComponent(key), host);
+    const u = new URL('/app/' + encodeURIComponent(key), wsHost);
     u.protocol = u.protocol === 'http:' ? 'ws:' : 'wss:';
     u.search = 'protocol=7&client=hibira-waiting-room&version=0.1.0';
     try { ws = new WS(u.toString()); } catch { ws = null; return; }
