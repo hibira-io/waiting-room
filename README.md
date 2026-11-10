@@ -110,6 +110,20 @@ in any browser while it's valid. If each queue number may check out only
 once, record `ticketId` at checkout and refuse a repeat. During a secret
 rotation, pass `secret: [newSecret, oldSecret]`.
 
+### Netlify, Amazon CloudFront and frameworks
+
+- Netlify Edge Functions: [`templates/netlify`](templates/netlify).
+- Amazon CloudFront Functions (the secret stays in a KeyValueStore):
+  [`templates/cloudfront`](templates/cloudfront).
+- Server frameworks: the Hibira packages for
+  [Rails](https://github.com/hibira-io/rails),
+  [Django](https://github.com/hibira-io/django),
+  [Spring Boot](https://github.com/hibira-io/spring-boot),
+  [ASP.NET Core](https://github.com/hibira-io/dotnet),
+  [NestJS](https://github.com/hibira-io/nestjs) and
+  [Symfony](https://github.com/hibira-io/symfony) each have a waiting room
+  middleware with the same behaviour (from their 0.2.0 releases).
+
 ### Verify anywhere
 
 ```js
