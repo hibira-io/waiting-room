@@ -1,6 +1,6 @@
 {
   "name": "@hibira-io/waiting-room",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Virtual waiting room for ticket drops and launches on Hibira: check the signed pass at the edge (Cloudflare Workers, Next.js middleware, Express) and build custom queue pages",
   "keywords": [
     "waiting-room",

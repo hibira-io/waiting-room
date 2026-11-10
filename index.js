@@ -164,7 +164,7 @@ export function joinWaitingRoom({
     if (!WS || stopped) return;
     const u = new URL('/app/' + encodeURIComponent(key), wsHost);
     u.protocol = u.protocol === 'http:' ? 'ws:' : 'wss:';
-    u.search = 'protocol=7&client=hibira-waiting-room&version=0.1.0';
+    u.search = 'protocol=7&client=hibira-waiting-room&version=0.2.0';
     try { ws = new WS(u.toString()); } catch { ws = null; return; }
     ws.onmessage = (m) => {
       let fr;
