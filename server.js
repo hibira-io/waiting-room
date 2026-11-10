@@ -62,14 +62,31 @@ export async function verifyPass(pass, { secret, room, appId, now = Date.now() }
   if (now / 1000 >= claims.exp) return null;
   if (room !== undefined && claims.room !== room) return null;
   if (appId !== undefined && claims.app !== appId) return null;
-  return { appId: claims.app, room: claims.room, number: claims.n, ticketId: claims.tid, issuedAt: claims.iat, expiresAt: claims.exp };
+  const out = { appId: claims.app, room: claims.room, number: claims.n, ticketId: claims.tid, issuedAt: claims.iat, expiresAt: claims.exp };
+  if (typeof claims.sub === 'string') out.userId = claims.sub;
+  return out;
+}
+
+/**
+ * Signs a user token for rooms with one place per signed-in customer: the
+ * same userId gets the same place in every browser. userId is 1 to 128
+ * characters without "."; ttlSeconds is at most 7 days.
+ */
+export async function signUser({ secret, room, userId, ttlSeconds = 3600, now = Date.now() } = {}) {
+  const id = String(userId ?? '');
+  if (!id || id.length > 128 || id.includes('.')) throw new Error('signUser: userId must be 1 to 128 characters without "."');
+  const exp = Math.floor(now / 1000) + Math.min(Math.max(1, Math.floor(ttlSeconds)), 7 * 24 * 3600);
+  const k = await crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = new Uint8Array(await crypto.subtle.sign('HMAC', k, enc.encode('hibira-waitroom-user.' + room + '.' + id + '.' + exp)));
+  return id + '.' + exp + '.' + Array.from(sig, (b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 /** The hosted waiting page address for a room. */
-export function waitingRoomUrl({ appKey, room, returnUrl, host = DEFAULT_HOST, lang } = {}) {
+export function waitingRoomUrl({ appKey, room, returnUrl, host = DEFAULT_HOST, lang, user } = {}) {
   const u = new URL('/wait/' + encodeURIComponent(appKey) + '/' + encodeURIComponent(room), host);
   if (returnUrl) u.searchParams.set('return', String(returnUrl));
   if (lang) u.searchParams.set('lang', lang);
+  if (user) u.searchParams.set('user', user);
   return u.toString();
 }
 

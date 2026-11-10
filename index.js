@@ -11,7 +11,9 @@ const STATUS_EVENT = 'hibira:waitroom-status';
 
 /**
  * Joins a room and follows the line.
- * Callbacks: onUpdate({ number, position, ahead, etaMinutes, status }),
+ * Pass `user`, a token your server signs (see the README), for rooms that give
+ * one place per signed-in customer.
+ * Callbacks: onUpdate({ number, position, ahead, etaMinutes, drawPending, status }),
  * onTurn({ pass, number, expiresAt, redirect(url) }), onClosed(status), onError(err).
  * Returns { leave() }.
  */
@@ -19,6 +21,7 @@ export function joinWaitingRoom({
   key,
   room,
   host = DEFAULT_HOST,
+  user,
   wsHost = host === DEFAULT_HOST ? DEFAULT_EDGE_HOST : host,
   storage = typeof localStorage !== 'undefined' ? localStorage : null,
   onUpdate,
@@ -33,6 +36,8 @@ export function joinWaitingRoom({
   const storeKey = 'hibira-waitroom:' + key + ':' + room;
   let ticket = null;
   let number = 0;
+  let drawPending = false;
+  let redraw = false;
   let status = null;
   let stopped = false;
   let turn = false;
@@ -70,18 +75,33 @@ export function joinWaitingRoom({
       return;
     }
     if (!number) return;
+    if (drawPending) {
+      // Places for early arrivals are drawn at the start time: ask for ours
+      // then, spread over a few seconds so the whole draw doesn't ask at once.
+      const started = !(s.starts_at && Date.parse(s.starts_at) > Date.now());
+      if (started && !redraw) {
+        redraw = true;
+        later(() => { redraw = false; join(); }, 500 + Math.random() * 8000);
+      }
+      if (onUpdate) onUpdate({ number: 0, position: 0, ahead: 0, etaMinutes: null, drawPending: true, status: s });
+      return;
+    }
     if (number <= s.admitted) return takeTurn();
     const position = number - s.admitted;
     const moving = s.state === 'open' && s.admit_per_minute > 0 && !(s.starts_at && Date.parse(s.starts_at) > Date.now());
-    if (onUpdate) onUpdate({ number, position, ahead: position - 1, etaMinutes: moving ? position / s.admit_per_minute : null, status: s });
+    if (onUpdate) onUpdate({ number, position, ahead: position - 1, etaMinutes: moving ? position / s.admit_per_minute : null, drawPending: false, status: s });
   }
 
   async function join() {
     try {
-      const res = await post('/join', ticket ? { ticket } : {});
+      const body = {};
+      if (ticket) body.ticket = ticket;
+      if (user) body.user = user;
+      const res = await post('/join', body);
       if (res.status === 200 || res.status === 201) {
         ticket = res.j.ticket;
         number = res.j.number;
+        drawPending = !!res.j.draw_pending;
         backoff = 1000;
         save();
         update(res.j);
@@ -89,6 +109,9 @@ export function joinWaitingRoom({
         update(res.j.status);
       } else if (res.status === 404) {
         if (onError) onError(new Error('waiting room not found'));
+      } else if (res.status === 401 || res.status === 403) {
+        stop();
+        if (onError) onError(Object.assign(new Error(res.j.message || 'join refused'), { code: res.j.error }));
       } else {
         throw new Error('join failed: ' + res.status);
       }
@@ -123,6 +146,10 @@ export function joinWaitingRoom({
         join();
       } else if (res.status === 409 && res.j.status) {
         turn = false;
+        if (typeof res.j.number === 'number') {
+          number = res.j.number;
+          drawPending = !!res.j.draw_pending;
+        }
         update(res.j.status);
       } else {
         throw new Error('pass failed: ' + res.status);

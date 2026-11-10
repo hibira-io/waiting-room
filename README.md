@@ -156,15 +156,45 @@ connection can't be opened (for example, the app is at its connection
 limit), the client polls the status endpoint instead. The ticket is saved in
 `localStorage`, so a refresh keeps the visitor's place.
 
+## Bots and scalpers
+
+Three room settings (portal room settings, or the signed API: `shuffle`,
+`turnstile`, `one_per_user`):
+
+- **Draw places for early arrivals** (`shuffle`): everyone who joins before
+  `starts_at` gets a random place when the line starts. `onUpdate` reports
+  `drawPending: true` until then.
+- **Bot check** (`turnstile`): the hosted page shows a Cloudflare Turnstile
+  check before a visitor's first join. Hosted page only.
+- **One place per signed-in customer** (`one_per_user`): sign the customer's
+  ID on your server and send it along; the same customer gets the same
+  place in every browser, and the pass carries `userId`.
+
+```js
+import { signUser, waitingRoomUrl, verifyPass } from '@hibira-io/waiting-room/server';
+
+const user = await signUser({ secret: APP_SECRET, room: 'presale', userId: session.customerId });
+return Response.redirect(waitingRoomUrl({ appKey: 'APP_KEY', room: 'presale', returnUrl: request.url, user }));
+
+// At checkout:
+const claims = await verifyPass(pass, { secret: APP_SECRET, room: 'presale' });
+if (!claims || claims.userId !== session.customerId) return deny();
+```
+
+With your own waiting page, pass `user` to `joinWaitingRoom({ ..., user })`.
+
 ## Notes
 
 - Waiting visitors use one connection each, which counts toward your plan's
   connection limit. If the limit is reached, nobody is locked out: the page
   switches to polling.
 - Numbers are handed out in order of arrival, including to visitors who
-  arrive before `starts_at`. More tabs don't move anyone forward.
+  arrive before `starts_at`, unless the room draws places for early
+  arrivals. More tabs don't move anyone forward.
 - Tests: `npm test`. A live test against a server: `WR_E2E_HOST=http://localhost:8080 WR_E2E_KEY=... WR_E2E_APP_ID=... WR_E2E_SECRET=... WR_E2E_ROOM=e2e npm run test:e2e`.
 
 ## 中文摘要
 
 `@hibira-io/waiting-room` 是建立在 Hibira 上的排隊等候室（類似 Queue-it），適合搶票、限量開賣和新品上市。在 Hibira API 建立房間並設定每分鐘放行人數後，在 Cloudflare Workers、Next.js middleware 或 Express 呼叫 `protect()`。沒有通行證（pass）的訪客會被導到 Hibira 託管的等候頁（支援 7 種語言），輪到時會帶著簽名 pass 回到你的網站，並存進 HttpOnly cookie。想自己設計等候頁的話，可以用 `joinWaitingRoom()`。等候中的訪客會佔用連線數；連線數滿了，頁面會自動改成輪詢，不會有人被擋在外面。
+
+防機器人與黃牛：房間可開啟「提早到的人抽籤排順位」（`shuffle`）、「加入前機器人驗證」（`turnstile`，僅託管頁）、「每位登入顧客一個位置」（`one_per_user`，用 `signUser()` 在伺服器簽署顧客 ID，pass 會帶 `userId` 供結帳時比對）。
