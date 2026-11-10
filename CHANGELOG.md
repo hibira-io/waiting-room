@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.2.0
 
 - `signUser()` and `waitingRoomUrl({ user })` for rooms with one place per signed-in customer; `verifyPass` returns `userId` from such passes.
 - `joinWaitingRoom({ user })`, and support for rooms that draw places for early arrivals: `onUpdate` reports `drawPending`, and the client asks for its drawn place once the line starts.
