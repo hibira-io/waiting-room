@@ -43,6 +43,10 @@ export function decide(request: { url: string; method?: string; cookie?: string 
 /** null: let the request through. Otherwise return the Response. */
 export function protect(request: Request, options: GuardOptions): Promise<Response | null>;
 export function expressWaitingRoom(options: GuardOptions): (req: any, res: any, next: (err?: unknown) => void) => void;
+/** Fastify onRequest hook; request.hibiraPass holds the pass. */
+export function fastifyWaitingRoom(options: GuardOptions): (request: any, reply: any) => Promise<unknown>;
+/** Koa middleware; ctx.state.hibiraPass holds the pass. */
+export function koaWaitingRoom(options: GuardOptions): (ctx: any, next: () => Promise<unknown>) => Promise<unknown>;
 
 /** Signs a user token for rooms with one place per signed-in customer. */
 export function signUser(options: { secret: string; room: string; userId: string; ttlSeconds?: number; now?: number }): Promise<string>;
