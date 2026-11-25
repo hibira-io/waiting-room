@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- The `lang` option's type accepts `'it'` and `'fr'`: the hosted waiting page now speaks Italian and French.
+
 ## 0.2.0
 
 - `signUser()` and `waitingRoomUrl({ user })` for rooms with one place per signed-in customer; `verifyPass` returns `userId` from such passes.

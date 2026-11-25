@@ -27,7 +27,7 @@ export interface GuardOptions extends VerifyOptions {
   room: string;
   /** Default https://ws.hibira.io */
   host?: string;
-  lang?: 'en' | 'zh-TW' | 'zh-CN' | 'ja' | 'ko' | 'th' | 'vi';
+  lang?: 'en' | 'zh-TW' | 'zh-CN' | 'ja' | 'ko' | 'th' | 'vi' | 'it' | 'fr';
   /** Default hibira_wr_<room> */
   cookieName?: string;
 }
