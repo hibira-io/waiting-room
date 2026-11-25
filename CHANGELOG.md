@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.0
 
 - `fastifyWaitingRoom()` (an `onRequest` hook) and `koaWaitingRoom()` in `@hibira-io/waiting-room/server`.
 - README recipes for Hono, SvelteKit, Astro, Nuxt/Nitro, Remix and React Router with `protect()`.
