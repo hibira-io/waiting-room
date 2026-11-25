@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- The Go package moved to [hibira-io/go](https://github.com/hibira-io/go) as `github.com/hibira-io/go/waitingroom`, released with plain `vX.Y.Z` tags. The untagged `go/` folder here is removed.
+
 ## 0.3.0
 
 - `fastifyWaitingRoom()` (an `onRequest` hook) and `koaWaitingRoom()` in `@hibira-io/waiting-room/server`.
