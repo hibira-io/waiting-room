@@ -86,3 +86,42 @@ test('signUser matches the server format', async () => {
   assert.equal(tok, 'cust_42.1800000600.' + want);
   await assert.rejects(signUser({ secret: 's', room: 'r', userId: 'a.b' }));
 });
+
+test('fastify hook', async () => {
+  const { fastifyWaitingRoom } = await import('../server.js');
+  const hook = fastifyWaitingRoom(opts);
+  const reply = () => ({ headers: {}, header(k, v) { this.headers[k] = v; return this; }, code(c) { this.statusCode = c; return this; }, type(t) { this.headers['content-type'] = t; return this; }, send(b) { this.body = b; return this; } });
+  const req = (url, method = 'GET', cookie) => ({ protocol: 'https', headers: { host: 'shop.example.com', cookie }, url, method });
+  const a = reply();
+  await hook(req('/drop'), a);
+  assert.equal(a.statusCode, 302);
+  assert.match(a.headers.location, /^https:\/\/ws\.example\.com\/wait\/wr-key\/presale\?return=https%3A%2F%2Fshop\.example\.com%2Fdrop$/);
+  assert.equal(a.headers['cache-control'], 'no-store');
+  const b = reply();
+  await hook(req('/drop', 'POST'), b);
+  assert.equal(b.statusCode, 403);
+  const r = req('/drop', 'POST', 'hibira_wr_presale=' + fresh());
+  const c = reply();
+  await hook(r, c);
+  assert.equal(c.statusCode, undefined);
+  assert.equal(r.hibiraPass.number, 7);
+});
+
+test('koa middleware', async () => {
+  const { koaWaitingRoom } = await import('../server.js');
+  const mw = koaWaitingRoom(opts);
+  const ctx = (href, method = 'GET', cookie = '') => ({ href, method, state: {}, headers: {}, get: (k) => (k === 'cookie' ? cookie : ''), set(k, v) { this.headers[k] = v; }, append(k, v) { this.headers[k] = v; } });
+  const a = ctx('https://shop.example.com/drop?hibira_pass=' + fresh() + '&x=1');
+  await mw(a, async () => assert.fail('no pass yet'));
+  assert.equal(a.status, 302);
+  assert.equal(a.headers.Location, 'https://shop.example.com/drop?x=1');
+  assert.match(a.headers['Set-Cookie'], /^hibira_wr_presale=.*HttpOnly; SameSite=Lax; Secure$/);
+  const b = ctx('https://shop.example.com/drop', 'DELETE');
+  await mw(b, async () => assert.fail('denied'));
+  assert.equal(b.status, 403);
+  let ran = false;
+  const c = ctx('https://shop.example.com/drop', 'GET', 'hibira_wr_presale=' + fresh());
+  await mw(c, async () => { ran = true; });
+  assert.ok(ran);
+  assert.equal(c.state.hibiraPass.room, 'presale');
+});

@@ -169,3 +169,50 @@ export function expressWaitingRoom(opts) {
     }, next);
   };
 }
+
+function nodeUrl(protocol, host, path) {
+  return (protocol || 'http') + '://' + host + path;
+}
+
+const DENY_BODY = JSON.stringify({ error: 'waiting_room', message: 'join the waiting room first' });
+
+/**
+ * Fastify onRequest hook: fastify.addHook('onRequest', fastifyWaitingRoom(opts)),
+ * or put it on the routes a room protects with { onRequest: ... }.
+ * Inside the handler, request.hibiraPass holds the pass.
+ */
+export function fastifyWaitingRoom(opts) {
+  return async function hibiraWaitingRoom(request, reply) {
+    const url = nodeUrl(request.protocol, request.headers.host, request.url);
+    const d = await decide({ url, method: request.method, cookie: request.headers.cookie }, opts);
+    if (d.action === 'allow') {
+      request.hibiraPass = d.claims;
+      return;
+    }
+    reply.header('cache-control', 'no-store');
+    if (d.action === 'deny') return reply.code(403).type('application/json').send(DENY_BODY);
+    if (d.setCookie) reply.header('set-cookie', d.setCookie);
+    return reply.code(302).header('location', d.location).send();
+  };
+}
+
+/** Koa middleware: app.use(koaWaitingRoom(opts)). ctx.state.hibiraPass holds the pass. */
+export function koaWaitingRoom(opts) {
+  return async function hibiraWaitingRoom(ctx, next) {
+    const d = await decide({ url: ctx.href, method: ctx.method, cookie: ctx.get('cookie') }, opts);
+    if (d.action === 'allow') {
+      ctx.state.hibiraPass = d.claims;
+      return next();
+    }
+    ctx.set('Cache-Control', 'no-store');
+    if (d.action === 'deny') {
+      ctx.status = 403;
+      ctx.type = 'application/json';
+      ctx.body = DENY_BODY;
+      return;
+    }
+    if (d.setCookie) ctx.append('Set-Cookie', d.setCookie);
+    ctx.status = 302;
+    ctx.set('Location', d.location);
+  };
+}

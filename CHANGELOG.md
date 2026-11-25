@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- `fastifyWaitingRoom()` (an `onRequest` hook) and `koaWaitingRoom()` in `@hibira-io/waiting-room/server`.
+- README recipes for Hono, SvelteKit, Astro, Nuxt/Nitro, Remix and React Router with `protect()`.
+- Go: `github.com/hibira-io/waiting-room/go`, the pass check, `SignUser` and a `net/http` middleware with the same behaviour (tagged `go/v0.1.0`).
 - The `lang` option's type accepts `'it'` and `'fr'`: the hosted waiting page now speaks Italian and French.
 
 ## 0.2.0
