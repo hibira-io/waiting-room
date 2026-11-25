@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- The `lang` option's type accepts `'it'`: the hosted waiting page now speaks Italian.
+- The `lang` option's type accepts `'it'` and `'fr'`: the hosted waiting page now speaks Italian and French.
 
 ## 0.2.0
 
