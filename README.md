@@ -149,19 +149,19 @@ export async function loader({ request }) {
 
 ### Go
 
-`github.com/hibira-io/waiting-room/go` has the same check as `net/http`
+[`github.com/hibira-io/go/waitingroom`](https://github.com/hibira-io/go/tree/main/waitingroom) has the same check as `net/http`
 middleware, with no dependencies. It works with chi, Echo (`echo.WrapMiddleware`),
 Gin (`gin.WrapH`) and anything else that takes an `http.Handler`.
 
 ```go
-import waitingroom "github.com/hibira-io/waiting-room/go"
+import "github.com/hibira-io/go/waitingroom"
 
 room := waitingroom.Guard{AppKey: os.Getenv("HIBIRA_KEY"), Secret: []string{os.Getenv("HIBIRA_SECRET")}, Room: "presale"}
 http.Handle("/drop/", room.Middleware(dropHandler))
 // in dropHandler: waitingroom.FromContext(r.Context()).Number
 ```
 
-See [`go/README.md`](go/README.md).
+See its [README](https://github.com/hibira-io/go/tree/main/waitingroom).
 
 What `protect` does:
 
@@ -267,6 +267,6 @@ With your own waiting page, pass `user` to `joinWaitingRoom({ ..., user })`.
 
 ## 中文摘要
 
-`@hibira-io/waiting-room` 是建立在 Hibira 上的排隊等候室（類似 Queue-it），適合搶票、限量開賣和新品上市。在 Hibira API 建立房間並設定每分鐘放行人數後，在 Cloudflare Workers、Next.js middleware、Express、Fastify、Koa、Hono、SvelteKit、Astro、Nuxt、Remix 呼叫 `protect()` 或對應的 middleware；Go 用 `github.com/hibira-io/waiting-room/go` 的 `net/http` middleware。沒有通行證（pass）的訪客會被導到 Hibira 託管的等候頁（支援 7 種語言），輪到時會帶著簽名 pass 回到你的網站，並存進 HttpOnly cookie。想自己設計等候頁的話，可以用 `joinWaitingRoom()`。等候中的訪客會佔用連線數；連線數滿了，頁面會自動改成輪詢，不會有人被擋在外面。
+`@hibira-io/waiting-room` 是建立在 Hibira 上的排隊等候室（類似 Queue-it），適合搶票、限量開賣和新品上市。在 Hibira API 建立房間並設定每分鐘放行人數後，在 Cloudflare Workers、Next.js middleware、Express、Fastify、Koa、Hono、SvelteKit、Astro、Nuxt、Remix 呼叫 `protect()` 或對應的 middleware；Go 用 `github.com/hibira-io/go/waitingroom` 的 `net/http` middleware。沒有通行證（pass）的訪客會被導到 Hibira 託管的等候頁（支援 7 種語言），輪到時會帶著簽名 pass 回到你的網站，並存進 HttpOnly cookie。想自己設計等候頁的話，可以用 `joinWaitingRoom()`。等候中的訪客會佔用連線數；連線數滿了，頁面會自動改成輪詢，不會有人被擋在外面。
 
 防機器人與黃牛：房間可開啟「提早到的人抽籤排順位」（`shuffle`）、「加入前機器人驗證」（`turnstile`，僅託管頁）、「每位登入顧客一個位置」（`one_per_user`，用 `signUser()` 在伺服器簽署顧客 ID，pass 會帶 `userId` 供結帳時比對）。
